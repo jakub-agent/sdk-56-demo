@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { SymbolView } from "expo-symbols";
 import { Link } from "expo-router";
 import { useState } from "react";
@@ -9,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { useTheme } from "@/hooks/use-theme";
 import { thumbUri, type Photo } from "@/lib/photos";
 
 type Props = {
@@ -28,11 +30,22 @@ export function PhotoCell({
   onToggle,
   onLongPress,
 }: Props) {
+  // Fire a haptic, then run the long-press action. Only Android wires this up
+  // (it enters select mode); on iOS the long-press peek/context menu provides
+  // its own system haptic, so this stays undefined there.
+  const handleLongPress = onLongPress
+    ? () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        onLongPress(photo.id);
+      }
+    : undefined;
+
   // Preview size is derived from the loaded image's real dimensions, so it
   // shows just the image (no letterboxing) without any hardcoded aspect. iOS
   // scales the preview down to fit the screen, so we don't cap the height.
   const { width: screenWidth } = useWindowDimensions();
   const [aspect, setAspect] = useState<number | null>(null);
+  const theme = useTheme();
 
   const preview = {
     width: screenWidth,
@@ -57,10 +70,10 @@ export function PhotoCell({
       <Link.Trigger withAppleZoom>
         <Pressable
           style={styles.cell}
-          onLongPress={onLongPress ? () => onLongPress(photo.id) : undefined}
+          onLongPress={handleLongPress}
         >
           <Image
-            style={styles.image}
+            style={[styles.image, { backgroundColor: theme.backgroundElement }]}
             source={thumbUri(photo.id)}
             contentFit="cover"
             transition={150}
@@ -133,7 +146,6 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
-    backgroundColor: "#e0e0e0",
   },
   checkmark: {
     position: "absolute",

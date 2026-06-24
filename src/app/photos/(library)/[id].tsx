@@ -3,6 +3,7 @@ import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { StyleSheet, View } from "react-native";
 
 import { useHideTabBar } from "@/components/tab-bar-visibility";
+import { useTheme } from "@/hooks/use-theme";
 import { getPhoto } from "@/lib/photos";
 import { toolbarSpacerWidth, useToolbarIcons } from "@/lib/use-toolbar-icons";
 
@@ -10,13 +11,16 @@ export default function PhotoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const photo = getPhoto(id);
   const icons = useToolbarIcons();
+  const theme = useTheme();
 
   // Hide the native tab bar (iOS only — see app-tabs) while viewing the photo
   // so the bottom toolbar owns the bottom edge.
   useHideTabBar();
 
+  // Theme-aware backdrop so a contain-fit image letterboxes against black in
+  // dark mode and white in light mode, instead of a fixed white.
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Stack.Screen options={{ title: "2 Sep 2025" }} />
 
       {process.env.EXPO_OS !== "web" && (
@@ -72,7 +76,6 @@ export default function PhotoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   image: {
     flex: 1,
